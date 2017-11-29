@@ -1,9 +1,9 @@
-target   := nanoarch
-sources  := nanoarch.c
+target   := noarch
+sources  := noarch.c
 CFLAGS   := -Wall -O2 -g
 LFLAGS   := -static-libgcc
 LIBS     := -ldl
-packages := gl glew glfw3 alsa
+packages := 
 
 # do not edit from here onwards
 objects := $(addprefix build/,$(sources:.c=.o))
@@ -28,4 +28,3 @@ build/%.o: %.c Makefile
 	$(CC) $(CFLAGS) -c -MMD -o $@ $<
 
 -include $(addprefix build/,$(sources:.c=.d))
-

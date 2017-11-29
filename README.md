@@ -1,16 +1,11 @@
-# nanoarch
+# noarch
 
-nanoarch is a small libretro frontend (nanoarch.c has less than 1000 lines of
-code) created for educational purposes. It only provides the required (video,
-audio and basic input) features to run most non-libretro-gl cores and there's
-no UI or configuration support.
+noarch is a small libretro frontend that doesn't provide any video, audio or input. It loads a Core, along with its Content, runs an iteration, and then quits. This is useful for unit testing.
 
 ## Building
 
-Other than `make`, `pkg-config` and a working C99 or C++ compiler, you'll need
-`alsa` and `glfw` development files installed.
+Use `make`, `pkg-config`, along with a working C99 or C++ compiler.
 
 ## Running
 
-    ./nanoarch <core> <uncompressed content>
-
+    ./noarch <core> <uncompressed content>
