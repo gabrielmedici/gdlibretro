@@ -3,14 +3,14 @@ sources  := noarch.c
 CFLAGS   := -Wall -O2 -g
 LFLAGS   := -static-libgcc
 LIBS     := -ldl
-packages := 
+packages :=
 
 # do not edit from here onwards
 objects := $(addprefix build/,$(sources:.c=.o))
 ifneq ($(packages),)
-    LIBS    += $(shell pkg-config --libs-only-l $(packages))
-    LFLAGS  += $(shell pkg-config --libs-only-L --libs-only-other $(packages))
-    CFLAGS  += $(shell pkg-config --cflags $(packages))
+	LIBS    += $(shell pkg-config --libs-only-l $(packages))
+	LFLAGS  += $(shell pkg-config --libs-only-L --libs-only-other $(packages))
+	CFLAGS  += $(shell pkg-config --cflags $(packages))
 endif
 
 .PHONY: all clean
