@@ -65,7 +65,9 @@ static void video_configure(const struct retro_game_geometry * geom) {
 
 static void video_deinit() {}
 
-static void audio_init(int frequency) {}
+static void audio_init(int frequency) {
+	(void)frequency;
+}
 
 static void audio_deinit() {}
 
@@ -128,7 +130,10 @@ static bool core_environment(unsigned cmd, void * data) {
 }
 
 static void core_video_refresh(const void * data, unsigned width, unsigned height, size_t pitch) {
-	// Nothing
+	(void)data;
+	(void)width;
+	(void)height;
+	(void)pitch;
 }
 
 static void core_input_poll(void) {
@@ -136,14 +141,21 @@ static void core_input_poll(void) {
 }
 
 static int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id) {
+	(void)port;
+	(void)device;
+	(void)index;
+	(void)id;
 	return 0;
 }
 
 static void core_audio_sample(int16_t left, int16_t right) {
-	// Nothing
+	(void)left;
+	(void)right;
 }
 
 static size_t core_audio_sample_batch(const int16_t * data, size_t frames) {
+	(void)data;
+	(void)frames;
 	return 0;
 }
 
@@ -203,7 +215,9 @@ static void core_load_game(const char * filename) {
 	};
 	struct retro_game_info info = {
 		filename,
-		0
+		0,
+		0,
+		NULL
 	};
 	FILE * file = fopen(filename, "rb");
 
