@@ -199,7 +199,7 @@ static void core_load_game(const char * filename) {
 		0
 	};
 	struct retro_system_info system = {
-		0
+		0, 0, 0, false, false
 	};
 	struct retro_game_info info = {
 		filename,
