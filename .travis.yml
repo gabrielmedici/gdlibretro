@@ -8,7 +8,6 @@ matrix:
       sudo: required
     - os: osx
       osx_image: xcode8.3
-      env: LIBS=-ldl
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo apt-get -qq update ; fi
