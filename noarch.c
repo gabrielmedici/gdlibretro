@@ -207,8 +207,14 @@ static void core_load(const char * sofile) {
 }
 
 static void core_load_game(const char * filename) {
+	struct retro_system_timing timing = {
+		60.0f, 10000.0f
+	};
+	struct retro_game_geometry geom = {
+		100, 100, 100, 100, 1.0f
+	};
 	struct retro_system_av_info av = {
-		0
+		geom, timing
 	};
 	struct retro_system_info system = {
 		0, 0, 0, false, false
