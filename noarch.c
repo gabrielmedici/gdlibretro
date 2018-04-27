@@ -39,7 +39,7 @@ g_retro;
 
 #define load_sym(V, S) do {\
 	if (!((*(void**)&V) = dlsym(g_retro.handle, #S))) \
-		die("Failed to load symbol '" #S "'': %s", dlerror()); \
+		die("[noarch] Failed to load symbol '" #S "'': %s", dlerror()); \
 	} while (0)
 #define load_retro_sym(S) load_sym(g_retro.S, S)
 
@@ -171,7 +171,7 @@ static void core_load(const char * sofile) {
 	g_retro.handle = dlopen(sofile, RTLD_LAZY);
 
 	if (!g_retro.handle)
-		die("Failed to load core: %s", dlerror());
+		die("[noarch] Failed to load core: %s", dlerror());
 
 	dlerror();
 
@@ -203,7 +203,7 @@ static void core_load(const char * sofile) {
 	g_retro.retro_init();
 	g_retro.initialized = true;
 
-	puts("Core loaded");
+	puts("[noarch] Core loaded");
 }
 
 static void core_load_game(const char * filename) {
@@ -244,7 +244,7 @@ static void core_load_game(const char * filename) {
 	}
 
 	if (!g_retro.retro_load_game( & info))
-		die("The core failed to load the content.");
+		die("[noarch] The core failed to load the content.");
 
 	g_retro.retro_get_system_av_info( & av);
 
@@ -254,7 +254,7 @@ static void core_load_game(const char * filename) {
 	return;
 
 	libc_error:
-		die("Failed to load content '%s'", filename);
+		die("[noarch] Failed to load content '%s'", filename);
 }
 
 static void core_unload() {
@@ -267,7 +267,7 @@ static void core_unload() {
 
 int main(int argc, char * argv[]) {
 	if (argc < 3)
-		die("usage: %s <core> <game>", argv[0]);
+		die("Usage: %s <core> <game>", argv[0]);
 
 	core_load(argv[1]);
 	core_load_game(argv[2]);
