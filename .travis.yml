@@ -32,6 +32,7 @@ addons:
     - libc6-dbg
 
 script:
+  - cmake .
   - make
 
 cache:
