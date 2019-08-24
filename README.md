@@ -4,8 +4,13 @@
 
 ## Building
 
-Use `make`, `pkg-config`, along with a working C99 or C++ compiler.
+``` bash
+cmake .
+make
+```
 
 ## Running
 
-    ./noarch <core> <uncompressed content>
+```
+./noarch <core> <uncompressed content>
+```
