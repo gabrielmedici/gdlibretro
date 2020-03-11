@@ -4,4 +4,5 @@ project(noarch
 	LANGUAGES C )
 
 add_executable(noarch noarch.c)
+target_compile_options(noarch PRIVATE -Wall -Wextra -pedantic -Werror)
 target_link_libraries(noarch dl)

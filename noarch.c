@@ -71,13 +71,9 @@ static void audio_init(int frequency) {
 
 static void audio_deinit() {}
 
-static void core_log(enum retro_log_level level,
-	const char * fmt, ...) {
-	char buffer[4096] = {
-		0
-	};
-	static
-	const char * levelstr[] = {
+static void core_log(enum retro_log_level level, const char * fmt, ...) {
+	char buffer[4096] = {0};
+	static const char * levelstr[] = {
 		"dbg",
 		"inf",
 		"wrn",
@@ -103,27 +99,42 @@ static bool core_environment(unsigned cmd, void * data) {
 	bool * bval;
 
 	switch (cmd) {
-	case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
-		{
-			struct retro_log_callback * cb = (struct retro_log_callback * ) data;
-			cb->log = core_log;
+		case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
+			{
+				struct retro_log_callback* cb = (struct retro_log_callback*)data;
+				cb->log = core_log;
+			}
 			break;
-		}
-	case RETRO_ENVIRONMENT_GET_CAN_DUPE:
-		bval = (bool * ) data; * bval = true;
-		break;
-	case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
-		{
-			return true;
-		}
-	case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
-	case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
-		* (const char * * ) data = ".";
-		return true;
 
-	default:
-		core_log(RETRO_LOG_DEBUG, "Unhandled env #%u", cmd);
-		return false;
+		case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+			bval = (bool*)data;
+			*bval = true;
+			break;
+
+		case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
+			return true;
+
+		case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
+		case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
+		case RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY:
+		case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
+			*(const char**)data = ".";
+			return true;
+
+		case RETRO_ENVIRONMENT_SET_MESSAGE:
+			{
+				const struct retro_message * message = (const struct retro_message *)data;
+				printf("[core] RETRO_ENVIRONMENT_SET_MESSAGE: %s\n", message->msg);
+			}
+			break;
+
+		case RETRO_ENVIRONMENT_SHUTDOWN:
+			puts("[core] RETRO_ENVIRONMENT_SHUTDOWN");
+			break;
+
+		default:
+			core_log(RETRO_LOG_DEBUG, "Unhandled env #%u", cmd);
+			return false;
 	}
 
 	return true;
@@ -159,7 +170,7 @@ static size_t core_audio_sample_batch(const int16_t * data, size_t frames) {
 	return 0;
 }
 
-static void core_load(const char * sofile) {
+static bool core_load(const char * sofile) {
 	void( * set_environment)(retro_environment_t) = NULL;
 	void( * set_video_refresh)(retro_video_refresh_t) = NULL;
 	void( * set_input_poll)(retro_input_poll_t) = NULL;
@@ -170,8 +181,10 @@ static void core_load(const char * sofile) {
 	memset( & g_retro, 0, sizeof(g_retro));
 	g_retro.handle = dlopen(sofile, RTLD_LAZY);
 
-	if (!g_retro.handle)
-		die("[noarch] Failed to load core: %s", dlerror());
+	if (!g_retro.handle) {
+		printf("[noarch] Failed to load core: %s\n", dlerror());
+		return false;
+	}
 
 	dlerror();
 
@@ -203,10 +216,10 @@ static void core_load(const char * sofile) {
 	g_retro.retro_init();
 	g_retro.initialized = true;
 
-	puts("[noarch] Core loaded");
+	return true;
 }
 
-static void core_load_game(const char * filename) {
+static bool core_load_game(const char * filename) {
 	struct retro_system_timing timing = {
 		60.0f, 10000.0f
 	};
@@ -219,64 +232,93 @@ static void core_load_game(const char * filename) {
 	struct retro_system_info system = {
 		0, 0, 0, false, false
 	};
+
 	struct retro_game_info info = {
 		filename,
 		0,
 		0,
 		NULL
 	};
-	FILE * file = fopen(filename, "rb");
 
-	if (!file)
-		goto libc_error;
+	FILE* file = NULL;
+	if (filename) {
+		file = fopen(filename, "rb");
 
-	fseek(file, 0, SEEK_END);
-	info.size = ftell(file);
-	rewind(file);
+		if (!file) {
+			printf("[noarch] Error: Failed to load content from '%s'\n", filename);
+			fclose(file);
+			return false;
+		}
 
-	g_retro.retro_get_system_info( & system);
-
-	if (!system.need_fullpath) {
-		info.data = malloc(info.size);
-
-		if (!info.data || !fread((void * ) info.data, info.size, 1, file))
-			goto libc_error;
+		fseek(file, 0, SEEK_END);
+		info.size = ftell(file);
+		rewind(file);
 	}
 
-	if (!g_retro.retro_load_game( & info))
-		die("[noarch] The core failed to load the content.");
+	g_retro.retro_get_system_info(&system);
+	printf("[noarch] Info: %s %s\n", system.library_name, system.library_version);
 
-	g_retro.retro_get_system_av_info( & av);
+	if (filename && !system.need_fullpath) {
+		info.data = malloc(info.size);
 
-	video_configure( & av.geometry);
+		if (!info.data || !fread((void * ) info.data, info.size, 1, file)) {
+			puts("[noarch] Error: Failed to load game data.");
+			fclose(file);
+			return false;
+		}
+		fclose(file);
+	}
+
+	if (!g_retro.retro_load_game(&info)) {
+		puts("[noarch] The core failed to load the game.");
+		return false;
+	}
+
+	g_retro.retro_get_system_av_info(&av);
+	printf("[noarch] Video: %ix%i\n", av.geometry.base_width, av.geometry.base_height);
+
+	video_configure(&av.geometry);
 	audio_init(av.timing.sample_rate);
-
-	return;
-
-	libc_error:
-		die("[noarch] Failed to load content '%s'", filename);
+	return true;
 }
 
 static void core_unload() {
-	if (g_retro.initialized)
+	if (g_retro.initialized) {
 		g_retro.retro_deinit();
+	}
 
-	if (g_retro.handle)
+	if (g_retro.handle) {
 		dlclose(g_retro.handle);
+	}
 }
 
 int main(int argc, char * argv[]) {
-	if (argc < 3)
-		die("Usage: %s <core> <game>", argv[0]);
+	// Ensure proper amount of arguments.
+	if (argc < 2) {
+		printf("Usage: %s <core> [game]\n", argv[0]);
+		return 1;
+	}
 
-	core_load(argv[1]);
-	core_load_game(argv[2]);
+	// Load the core.
+	if (!core_load(argv[1])) {
+		return 1;
+	}
+	puts("[noarch] Core loaded");
 
+	// Load the game if needed.
+	if (!core_load_game((argc > 2) ? argv[2] : NULL)) {
+		return 1;
+	}
+
+	// Run an iteration.
+	puts("[noarch] retro_run()");
 	g_retro.retro_run();
 
+	// Unload the core.
 	core_unload();
 	audio_deinit();
 	video_deinit();
+	puts("[noarch] Core unloaded");
 
 	return 0;
 }
