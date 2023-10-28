@@ -12,6 +12,14 @@
             "group": "build",
             "problemMatcher": [],
             "detail": "CMake template build task"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: Install",
+            "command": "install",
+            "dependsOn": [
+                "CMake: build"
+            ],      
         }
     ]
 }
