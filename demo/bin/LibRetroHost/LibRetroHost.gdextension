@@ -1,0 +1,8 @@
+[configuration]
+
+entry_symbol = "GDExtensionInit"
+compatibility_minimum = 4.1
+
+[libraries]
+windows.release.x86_64 = "lib/Windows-AMD64/LibRetroHost-d.dll"
+windows.debug.x86_64 = "lib/Windows-AMD64/LibRetroHost-d.dll"

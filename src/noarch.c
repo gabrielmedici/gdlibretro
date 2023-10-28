@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 
-#include "libretro-common/include/libretro.h"
+#include "libretro.h"
 
 int width = 0;
 int height = 0;
@@ -226,12 +226,12 @@ static bool core_load(const char * sofile) {
   load_retro_sym(retro_load_game);
   load_retro_sym(retro_unload_game);
 
-  load_sym(set_environment, retro_set_environment);
-  load_sym(set_video_refresh, retro_set_video_refresh);
-  load_sym(set_input_poll, retro_set_input_poll);
-  load_sym(set_input_state, retro_set_input_state);
-  load_sym(set_audio_sample, retro_set_audio_sample);
-  load_sym(set_audio_sample_batch, retro_set_audio_sample_batch);
+  load_symbol(set_environment, retro_set_environment);
+  load_symbol(set_video_refresh, retro_set_video_refresh);
+  load_symbol(set_input_poll, retro_set_input_poll);
+  load_symbol(set_input_state, retro_set_input_state);
+  load_symbol(set_audio_sample, retro_set_audio_sample);
+  load_symbol(set_audio_sample_batch, retro_set_audio_sample_batch);
 
   set_environment(core_environment);
   set_video_refresh(core_video_refresh);

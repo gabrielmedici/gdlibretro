@@ -1,8 +1,4 @@
-*.o
-/build
-/noarch
-/bin
-CMakeCache.txt
-CMakeFiles
-*.cmake
-Makefile
+CMakeLists.txt.user
+.vscode/settings.json
+build
+*.dll
