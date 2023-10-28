@@ -1,6 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://dajnw4utx1a03"]
+[gd_scene load_steps=3 format=3 uid="uid://dajnw4utx1a03"]
 
 [ext_resource type="Script" path="res://node_3d.gd" id="1_xccqp"]
 
-[node name="Node3D" type="Node3D"]
+[sub_resource type="ImageTexture" id="ImageTexture_85gy3"]
+
+[node name="Node2D" type="Node2D"]
 script = ExtResource("1_xccqp")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 831.0
+offset_bottom = 508.0
+texture = SubResource("ImageTexture_85gy3")

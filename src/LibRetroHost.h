@@ -1,6 +1,8 @@
 #pragma once
 
+#include "gdextension_interface.h"
 #include "godot_cpp/classes/object.hpp"
+#include "godot_cpp/classes/image.hpp"
 #include "libretro.h"
 #include "Windows.h"
 
@@ -47,11 +49,18 @@ class LibRetroHost : public godot::Object
 public:
     static bool load_core(godot::String path);
     static void unload_core();
+    static void run();
     static unsigned width;
     static unsigned height;
+    static unsigned pixel_format;
+
+    static godot::Ref<godot::Image> frame_buffer;
+    static godot::Ref<godot::Image> get_frame_buffer();
 
 private:
     static void _bind_methods();
+
+    static bool set_pixel_format(unsigned format);
 
     static bool core_environment(unsigned cmd, void *data);
     static void core_video_refresh(const void *data, unsigned width, unsigned height, size_t pitch);

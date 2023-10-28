@@ -5,11 +5,15 @@
 #include "godot_cpp/core/class_db.hpp"
 #include "godot_cpp/core/defs.hpp"
 #include "godot_cpp/godot.hpp"
+#include "godot_cpp/classes/engine.hpp"
 
 #include "LibRetroHost.h"
+#include "RetroHost.hpp"
 
 /// @file
 /// Register our classes with Godot.
+
+static RetroHost* singleton = nullptr;
 
 namespace
 {
@@ -26,6 +30,10 @@ namespace
         }
 
         godot::ClassDB::register_class<LibRetroHost>();
+        godot::ClassDB::register_class<RetroHost>();
+
+        singleton = memnew( RetroHost );
+        godot::Engine::get_singleton()->register_singleton("RetroHost", RetroHost::get_singleton() );
     }
 
     /// @brief Called by Godot to let us do any cleanup.
@@ -37,6 +45,8 @@ namespace
         {
             return;
         }
+        godot::Engine::get_singleton()->unregister_singleton("RetroHost");
+        memdelete( singleton );
     }
 }
 

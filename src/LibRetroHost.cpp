@@ -1,6 +1,7 @@
 #include "godot_cpp/classes/file_access.hpp"
 #include "godot_cpp/core/class_db.hpp"
 #include "godot_cpp/variant/utility_functions.hpp"
+#include "godot_cpp/classes/rendering_server.hpp"
 
 #include "LibRetroHost.h"
 #include "Version.h"
@@ -9,6 +10,8 @@
 unsigned LibRetroHost::width = 0;
 unsigned LibRetroHost::height = 0;
 struct retro_audio_callback LibRetroHost::audio_callback;
+unsigned LibRetroHost::pixel_format;
+godot::Ref<godot::Image> LibRetroHost::frame_buffer;
 
 LibRetroHost::LibRetroHost()
 {
@@ -34,6 +37,25 @@ static void core_log( enum retro_log_level level, const char *fmt, ... )
     godot::UtilityFunctions::print( "[" + godot::String( levelstr[level - 1] ) + "] " + buffer );
 }
 
+bool LibRetroHost::set_pixel_format( unsigned format )
+{
+    pixel_format = format;
+    switch ( format )
+    {
+        case RETRO_PIXEL_FORMAT_0RGB1555:
+            godot::UtilityFunctions::print( "Pixel format: 0RGB1555" );
+            return true;
+        case RETRO_PIXEL_FORMAT_XRGB8888:
+            godot::UtilityFunctions::print( "Pixel format: XRGB8888" );
+            return true;
+        case RETRO_PIXEL_FORMAT_RGB565:
+            godot::UtilityFunctions::print( "Pixel format: RGB565" );
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool LibRetroHost::core_environment( unsigned cmd, void *data )
 {
     switch ( cmd )
@@ -55,8 +77,12 @@ bool LibRetroHost::core_environment( unsigned cmd, void *data )
 
         case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
         {
-            core_log( RETRO_LOG_DEBUG, "[noarch] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT" );
-            return true;
+            const enum retro_pixel_format *fmt = (enum retro_pixel_format *)data;
+
+            if (*fmt > RETRO_PIXEL_FORMAT_RGB565)
+                return false;
+
+            return set_pixel_format(*fmt);
         }
 
         case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
@@ -116,23 +142,49 @@ bool LibRetroHost::core_environment( unsigned cmd, void *data )
 void LibRetroHost::core_video_refresh( const void *data, unsigned vwidth, unsigned vheight,
                                        size_t pitch )
 {
-    godot::UtilityFunctions::print( "Video: ", vwidth, "x", vheight, " ", pitch );
+    //godot::UtilityFunctions::print( "Video: ", vwidth, "x", vheight, " ", pitch );
+    if(!data || frame_buffer.is_null() || !frame_buffer.is_valid())
+        return;
 
-    (void)data;
-    (void)vwidth;
-    (void)vheight;
-    (void)pitch;
+    if((unsigned)frame_buffer->get_width() != vwidth || (unsigned)frame_buffer->get_height() != vheight) {
+        godot::UtilityFunctions::print( "Resizing frame buffer to ", vwidth, "x", vheight );
+        auto created_frame_buffer = godot::Image::create(vwidth, vheight, false, frame_buffer->get_format());
+        if(created_frame_buffer.is_null() || !created_frame_buffer.is_valid()) {
+            godot::UtilityFunctions::printerr( "Failed to recreate frame buffer" );
+            return;
+        }
+        frame_buffer = created_frame_buffer;
+    }
+
+    unsigned buffer_size;
+    switch (frame_buffer->get_format()) {
+        case godot::Image::FORMAT_RGB565:
+            buffer_size = vwidth * vheight * 2;
+            break;
+        case godot::Image::FORMAT_RGBA8:
+            buffer_size = vwidth * vheight * 4;
+            break;
+        default:
+            godot::UtilityFunctions::printerr( "Unhandled pixel format: ", frame_buffer->get_format() );
+            return;
+    }
+
+    godot::PackedByteArray intermediary_buffer;
+    intermediary_buffer.resize(buffer_size);
+    memcpy((void*)intermediary_buffer.ptr(), data, buffer_size);
+
+    frame_buffer->set_data(vwidth, vheight, false, frame_buffer->get_format(), intermediary_buffer);
 }
 
 void LibRetroHost::core_input_poll( void )
 {
-    godot::UtilityFunctions::print( "Input: poll" );
+    //godot::UtilityFunctions::print( "Input: poll" );
 }
 
 int16_t LibRetroHost::core_input_state( unsigned port, unsigned device, unsigned index,
                                         unsigned id )
 {
-    godot::UtilityFunctions::print( "Input: ", port, " ", device, " ", index, " ", id );
+    //godot::UtilityFunctions::print( "Input: ", port, " ", device, " ", index, " ", id );
     (void)port;
     (void)device;
     (void)index;
@@ -142,14 +194,14 @@ int16_t LibRetroHost::core_input_state( unsigned port, unsigned device, unsigned
 
 void LibRetroHost::core_audio_sample( int16_t left, int16_t right )
 {
-    godot::UtilityFunctions::print( "Audio: ", left, " ", right );
+    //godot::UtilityFunctions::print( "Audio: ", left, " ", right );
     (void)left;
     (void)right;
 }
 
 size_t LibRetroHost::core_audio_sample_batch( const int16_t *data, size_t frames )
 {
-    godot::UtilityFunctions::print( "Audio: ", frames, " frames" );
+    //godot::UtilityFunctions::print( "Audio: ", frames, " frames" );
     (void)data;
     (void)frames;
     return 0;
@@ -157,8 +209,27 @@ size_t LibRetroHost::core_audio_sample_batch( const int16_t *data, size_t frames
 
 void LibRetroHost::video_configure( const struct retro_game_geometry *geom )
 {
-    width = geom->max_width;
-    height = geom->max_height;
+    width = geom->base_width;
+    height = geom->base_height;
+    godot::UtilityFunctions::print( "Video cfg: ", width, "x", height );
+    godot::Image::Format fmt;
+
+    switch(pixel_format) {
+      case RETRO_PIXEL_FORMAT_0RGB1555:
+        fmt = godot::Image::FORMAT_RGB565;
+        break;
+      case RETRO_PIXEL_FORMAT_XRGB8888:
+        fmt = godot::Image::FORMAT_RGBA8;
+        break;
+      case RETRO_PIXEL_FORMAT_RGB565:
+        fmt = godot::Image::FORMAT_RGB565;
+        break;
+      default:
+        godot::UtilityFunctions::printerr( "Unhandled pixel format: ", pixel_format );
+        return;
+    }
+
+    frame_buffer = godot::Image::create(width, height, false, fmt);
 }
 
 void LibRetroHost::video_deinit()
@@ -352,9 +423,6 @@ bool LibRetroHost::load_core( godot::String path )
     }
 
     g_retro.retro_run();
-    godot::UtilityFunctions::print( "Core run finished" );
-
-    unload_core();
 
     return true;
 }
@@ -374,8 +442,29 @@ void LibRetroHost::unload_core()
     }
 }
 
+void LibRetroHost::run()
+{
+    if(!g_retro.initialized) {
+      godot::UtilityFunctions::printerr( "Core not initialized" );
+      return;
+    }
+    g_retro.retro_run();
+}
+
+godot::Ref<godot::Image> LibRetroHost::get_frame_buffer() {
+    return frame_buffer;
+}
+
 void LibRetroHost::_bind_methods()
 {
     godot::ClassDB::bind_static_method( "LibRetroHost", godot::D_METHOD( "load_core", "path" ),
                                         &LibRetroHost::load_core );
+
+    godot::ClassDB::bind_static_method( "LibRetroHost", godot::D_METHOD( "unload_core" ),
+                                        &LibRetroHost::unload_core );
+
+    godot::ClassDB::bind_static_method( "LibRetroHost", godot::D_METHOD( "run" ), &LibRetroHost::run );
+
+    godot::ClassDB::bind_static_method( "LibRetroHost", godot::D_METHOD( "get_frame_buffer" ),
+                                        &LibRetroHost::get_frame_buffer );
 }

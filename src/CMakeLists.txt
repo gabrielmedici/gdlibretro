@@ -5,6 +5,12 @@ target_sources( ${PROJECT_NAME}
         LibRetroHost.h
         LibRetroHost.cpp
         RegisterExtension.cpp
+        RetroHost.hpp
+        RetroHost.cpp
+        CoreEnvironment.cpp
+        Audio.cpp
+        Input.cpp
+        Video.cpp
         noarch.c
 )
 
