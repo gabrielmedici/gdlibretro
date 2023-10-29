@@ -5,6 +5,7 @@
 #include "godot_cpp/classes/object.hpp"
 #include "libretro.h"
 #include "godot_cpp/classes/image.hpp"
+#include "yaml-cpp/yaml.h"
 
 class RetroHost : public godot::Object
 {
@@ -24,6 +25,12 @@ public:
 private:
 
     static RetroHost* singleton;
+
+    godot::Ref<godot::Image> frame_buffer;
+    godot::Ref<godot::Image> get_frame_buffer() { return frame_buffer; }
+
+    YAML::Node core_variables;
+    std::filesystem::path core_variables_path;
 
     bool core_environment(unsigned cmd, void *data);
 

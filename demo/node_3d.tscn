@@ -8,6 +8,8 @@
 script = ExtResource("1_xccqp")
 
 [node name="TextureRect" type="TextureRect" parent="."]
-offset_right = 831.0
-offset_bottom = 508.0
+offset_left = 214.0
+offset_top = 136.0
+offset_right = 795.0
+offset_bottom = 491.0
 texture = SubResource("ImageTexture_85gy3")

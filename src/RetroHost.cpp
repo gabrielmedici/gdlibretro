@@ -4,6 +4,9 @@
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 
+#include <fstream>
+#include <iostream>
+
 // https://stackoverflow.com/questions/1387064/how-to-get-the-error-message-from-the-error-code-returned-by-getlasterror
 // Returns the last Win32 error, in string format. Returns an empty string if there is no error.
 std::string GetLastErrorAsStr()
@@ -85,8 +88,9 @@ bool RetroHost::load_core( godot::String name )
         // MAYBE TODO: Add a setting to change the core base path in the editor
         // the current working directory in the editor is the godot executable itself, but we want
         // to load the cores from the project directory
-        this->cwd = godot::ProjectSettings::get_singleton()->globalize_path( "res://" );
-        dll_path = cwd + "libretro-cores/" + name + ".dll";
+        this->cwd =
+            godot::ProjectSettings::get_singleton()->globalize_path( "res://" ) + "libretro-cores/";
+        dll_path = cwd + name + ".dll";
     }
     else
     {
@@ -157,9 +161,21 @@ bool RetroHost::load_core( godot::String name )
         return get_singleton()->core_audio_sample_batch( data, frames );
     } );
 
-    this->core.retro_init();
-
     // End of c++ crimes
+
+    this->core_variables_path = ( this->cwd + name + ".yml" ).utf8().get_data();
+    try
+    {
+        godot::UtilityFunctions::print( "[RetroHost] Loading core variables file" );
+        this->core_variables = YAML::LoadFile( this->core_variables_path.string() );
+    }
+    catch ( YAML::BadFile &e )
+    {
+        (void)e;
+        this->core_variables = YAML::Node();
+    }
+
+    this->core.retro_init();
 
     this->core.retro_load_game( NULL );
 
@@ -178,6 +194,21 @@ bool RetroHost::load_core( godot::String name )
 
 void RetroHost::unload_core()
 {
+    try
+    {
+        godot::UtilityFunctions::print( "[RetroHost] Dumping variables to file: ", this->core_variables_path.c_str() );
+        std::filesystem::create_directories( this->core_variables_path.parent_path() );
+
+        std::ofstream ofs( this->core_variables_path );
+        ofs << this->core_variables;
+        ofs.close();
+    }
+    catch ( std::exception &e )
+    {
+        (void)e;
+        godot::UtilityFunctions::printerr( "[RetroHost] Failed to dump variables to file" );
+    }
+
     if ( this->core.initialized )
     {
         godot::UtilityFunctions::print( "[RetroHost] Deinitializing core" );
@@ -207,4 +238,5 @@ void RetroHost::_bind_methods()
     godot::ClassDB::bind_method( godot::D_METHOD( "load_core", "name" ), &RetroHost::load_core );
     godot::ClassDB::bind_method( godot::D_METHOD( "unload_core" ), &RetroHost::unload_core );
     godot::ClassDB::bind_method( godot::D_METHOD( "run" ), &RetroHost::run );
+    godot::ClassDB::bind_method( godot::D_METHOD( "get_frame_buffer" ), &RetroHost::get_frame_buffer );
 }

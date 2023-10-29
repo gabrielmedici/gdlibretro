@@ -11,21 +11,43 @@ void core_log( enum retro_log_level level, const char *fmt, ... )
     vsnprintf( buffer, sizeof( buffer ), fmt, va );
     va_end( va );
 
-    godot::UtilityFunctions::print( "[RetroHost Loaded CORE][" + godot::String( levelstr[level - 1] ) + "] " + buffer );
+    godot::UtilityFunctions::print( "[RetroHost Loaded CORE][" +
+                                    godot::String( levelstr[level - 1] ) + "] " + buffer );
 }
 
-bool get_variable(retro_variable *variable) {
+bool get_variable( retro_variable *variable )
+{
     godot::String key = variable->key;
 
-    if(key == "vice_sound_sample_rate") {
+    if ( key == "vice_sound_sample_rate" )
+    {
         variable->value = "48000";
         return true;
-    } else if (key == "vice_keyboard_keymap") {
+    }
+    else if ( key == "vice_keyboard_keymap" )
+    {
         variable->value = "positional";
         return true;
     }
 
     return false;
+}
+
+std::vector<std::string> split( std::string s, std::string delimiter )
+{
+    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    std::string token;
+    std::vector<std::string> res;
+
+    while ( ( pos_end = s.find( delimiter, pos_start ) ) != std::string::npos )
+    {
+        token = s.substr( pos_start, pos_end - pos_start );
+        pos_start = pos_end + delim_len;
+        res.push_back( token );
+    }
+
+    res.push_back( s.substr( pos_start ) );
+    return res;
 }
 
 bool RetroHost::core_environment( unsigned command, void *data )
@@ -51,10 +73,16 @@ bool RetroHost::core_environment( unsigned command, void *data )
         case RETRO_ENVIRONMENT_GET_VARIABLE:
         {
             auto result = get_variable( (retro_variable *)data );
-            if(result) {
-                godot::UtilityFunctions::print( "[RetroHost] Core variable ", ((retro_variable *)data)->key, " set to ", ((retro_variable *)data)->value );
-            } else {
-                godot::UtilityFunctions::print( "[RetroHost] Core variable set request ", ((retro_variable *)data)->key, " not handled" );
+            if ( result )
+            {
+                godot::UtilityFunctions::print( "[RetroHost] Core variable ",
+                                                ( (retro_variable *)data )->key, " set to ",
+                                                ( (retro_variable *)data )->value );
+            }
+            else
+            {
+                godot::UtilityFunctions::print( "[RetroHost] Core variable set request ",
+                                                ( (retro_variable *)data )->key, " not handled" );
             }
             return result;
         }
@@ -65,7 +93,7 @@ bool RetroHost::core_environment( unsigned command, void *data )
             auto variables = (const struct retro_variable *)data;
             while ( variables->key )
             {
-                godot::UtilityFunctions::print( "[RetroHost] Core variable preview ", variables->key);
+                this->core_variables[variables->key] = "";
                 variables++;
             }
         }
@@ -82,10 +110,12 @@ bool RetroHost::core_environment( unsigned command, void *data )
         {
             const enum retro_pixel_format *fmt = (enum retro_pixel_format *)data;
 
-            if (*fmt > RETRO_PIXEL_FORMAT_RGB565)
+            if ( *fmt > RETRO_PIXEL_FORMAT_RGB565 )
+            {
                 return false;
+            }
 
-            godot::UtilityFunctions::print( "[RetroHost] Core setting pixel format");
+            godot::UtilityFunctions::print( "[RetroHost] Core setting pixel format" );
             return this->core_video_set_pixel_format( *fmt );
         }
         break;
@@ -95,7 +125,7 @@ bool RetroHost::core_environment( unsigned command, void *data )
         case RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY:
         case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
         {
-            godot::UtilityFunctions::print( "[RetroHost] Core requested path");
+            godot::UtilityFunctions::print( "[RetroHost] Core requested path" );
             *(const char **)data = this->cwd.utf8().get_data();
             return true;
         }
@@ -103,13 +133,14 @@ bool RetroHost::core_environment( unsigned command, void *data )
         case RETRO_ENVIRONMENT_SHUTDOWN:
         {
             // TODO: Actually shut down the core
-            godot::UtilityFunctions::print( "[RetroHost] Core shutdown requested");
+            godot::UtilityFunctions::print( "[RetroHost] Core shutdown requested" );
             break;
         }
 
         default:
         {
-            godot::UtilityFunctions::print( "[RetroHost] Core environment command " + godot::String::num( command ) + " not implemented." );
+            godot::UtilityFunctions::print( "[RetroHost] Core environment command " +
+                                            godot::String::num( command ) + " not implemented." );
             return false;
         }
     }

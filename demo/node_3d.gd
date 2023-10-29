@@ -11,4 +11,10 @@ func _ready():
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	RetroHost.run()
+	var frame_buffer = RetroHost.get_frame_buffer()
+	if(!frame_buffer):
+		return
+		
+	var img_tex = ImageTexture.create_from_image(frame_buffer)
+	tex_rect.texture = img_tex
 	return

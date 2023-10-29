@@ -116,6 +116,7 @@ endif()
 set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
 
 add_subdirectory( extern/godot-cpp )
+add_subdirectory( extern/yaml-cpp)
 add_subdirectory( extern/libretro )
 
 set_target_properties( godot-cpp
@@ -126,4 +127,5 @@ set_target_properties( godot-cpp
 target_link_libraries( ${PROJECT_NAME}
     PRIVATE
         godot-cpp
+        yaml-cpp
 )
