@@ -15,22 +15,30 @@ void core_log( enum retro_log_level level, const char *fmt, ... )
                                     godot::String( levelstr[level - 1] ) + "] " + buffer );
 }
 
-bool get_variable( retro_variable *variable )
+bool RetroHost::get_variable( retro_variable *variable )
 {
-    godot::String key = variable->key;
-
-    if ( key == "vice_sound_sample_rate" )
+    if ( !this->core_variables[variable->key].IsDefined() )
     {
-        variable->value = "48000";
-        return true;
-    }
-    else if ( key == "vice_keyboard_keymap" )
-    {
-        variable->value = "positional";
-        return true;
+        godot::UtilityFunctions::printerr( "[RetroHost] Core variable ", variable->key, " not defined" );
+        return false;
     }
 
-    return false;
+    auto var_value = core_variables[variable->key].as<std::string>();
+    if(var_value.empty()) {
+        godot::UtilityFunctions::printerr( "[RetroHost] Core variable ", variable->key, " was empty ", var_value.c_str() );
+        return false;
+    }
+
+    // var_value goes out of scope after this function returns, so we need to copy it
+    const std::string::size_type size = var_value.size();
+    char *buffer = new char[size + 1];
+    memcpy(buffer, var_value.c_str(), size + 1);
+
+    // No leaks here please thank you
+    this->please_free_me_str.push_back(buffer);
+
+    variable->value = buffer;
+    return true;
 }
 
 std::vector<std::string> split( std::string s, std::string delimiter )
@@ -72,18 +80,19 @@ bool RetroHost::core_environment( unsigned command, void *data )
 
         case RETRO_ENVIRONMENT_GET_VARIABLE:
         {
-            auto result = get_variable( (retro_variable *)data );
-            if ( result )
-            {
-                godot::UtilityFunctions::print( "[RetroHost] Core variable ",
-                                                ( (retro_variable *)data )->key, " set to ",
-                                                ( (retro_variable *)data )->value );
-            }
-            else
-            {
-                godot::UtilityFunctions::print( "[RetroHost] Core variable set request ",
-                                                ( (retro_variable *)data )->key, " not handled" );
-            }
+            auto var = (retro_variable *)data;
+            auto result = this->get_variable( var );
+            // if ( result )
+            // {
+            //     godot::UtilityFunctions::print( "[RetroHost] Core variable ",
+            //                                     var->key, " set to ",
+            //                                     var->value );
+            // }
+            // else
+            // {
+            //     godot::UtilityFunctions::print( "[RetroHost] Core variable set request ",
+            //                                     var->key, " not handled" );
+            // }
             return result;
         }
         break;
@@ -93,7 +102,17 @@ bool RetroHost::core_environment( unsigned command, void *data )
             auto variables = (const struct retro_variable *)data;
             while ( variables->key )
             {
-                this->core_variables[variables->key] = "";
+                if(!this->core_variables[variables->key].IsDefined()) {
+                    std::string value = variables->value;
+                    // Get the possible values from the value string and trim the leading space
+                    auto possible_values_str = split(value, ";")[1].erase(0, 1);
+                    // Split the possible values into a vector
+                    auto possible_values = split(possible_values_str, "|");
+                    // Set the value to the first possible value
+                    this->core_variables[variables->key] = possible_values[0];
+
+                    godot::UtilityFunctions::print( "[RetroHost] Core variable ", variables->key, " was not present in the config file, now set to the first possible value: ", possible_values[0].c_str() );
+                }
                 variables++;
             }
         }
@@ -101,8 +120,65 @@ bool RetroHost::core_environment( unsigned command, void *data )
         case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
         {
             // Just say no variable was updated
+            // TODO: Actually do something
             bool *b = (bool *)data;
             *b = false;
+        }
+        break;
+
+        // TODO: Implement (DOS)
+        // case RETRO_ENVIRONMENT_GET_PERF_INTERFACE: {
+        //     // struct retro_perf_callback
+        //     auto callback = (struct retro_perf_callback *)data;
+        // }
+
+
+        // TODO: Implement (DOS)
+        // case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE: {
+        //     auto callback = (struct retro_disk_control_callback *)data;
+        //     godot::UtilityFunctions::print( "[RetroHost] disk control interface set" );
+        // }
+        // break;
+
+        // TODO: Implement (DOS)
+        // case RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE: {
+
+        // }
+
+        // TODO: Implement (DOS)
+        // case RETRO_ENVIRONMENT_SET_VARIABLE: {
+
+        // }
+        // break;
+
+        // TODO: Implement (DOS) and understand wtf achievements are supposed to be
+        // case RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS: {
+
+        // }
+        // break;
+
+        // TODO: Implement (DOS)
+        // case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK: {
+
+        // }
+        // break;
+
+        // TODO: Implement (DOS) not really important
+        // case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO: {
+
+        // }
+
+        case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION: {
+            unsigned *version = (unsigned *)data;
+            // TODO: Support higher versions
+            *version = 0;
+            return false;
+        }
+
+        case RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION: {
+            unsigned *version = (unsigned *)data;
+            *version = 0;
+            return false;
         }
         break;
 
@@ -120,15 +196,67 @@ bool RetroHost::core_environment( unsigned command, void *data )
         }
         break;
 
+        case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK: {
+            // const struct retro_keyboard_callback
+            auto callback = (const struct retro_keyboard_callback *)data;
+            this->core.retro_keyboard_event_callback = callback->callback;
+            godot::UtilityFunctions::print( "[RetroHost] keyboard callback set" );
+        }
+        break;
+
+        case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS: {
+            if(!data)
+                return false;
+            // TODO: Support bitmasks
+            bool *b = (bool *)data;
+            *b = false;
+        }
+        break;
+
+        case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS: {
+            const struct retro_input_descriptor *desc = (const struct retro_input_descriptor *)data;
+            while (desc->description) {
+                godot::UtilityFunctions::print("[RetroHost] Core input descriptor: ", desc->description);
+                desc++;
+            }
+        }
+        break;
+
+        case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME: {
+            bool *b = (bool *)data;
+            if(*b) {
+                godot::UtilityFunctions::print("[RetroHost] Core supports no game");
+            } else {
+                godot::UtilityFunctions::print("[RetroHost] Core does not support no game");
+            }
+        }
+
+        case RETRO_ENVIRONMENT_GET_THROTTLE_STATE: {
+            // retro_throttle_state
+            auto throttle_state = (struct retro_throttle_state *)data;
+            throttle_state->mode = RETRO_THROTTLE_UNBLOCKED;
+            throttle_state->rate = 0;
+            return true;
+        }
+        break;
+
         case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
         case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
         case RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY:
         case RETRO_ENVIRONMENT_GET_LIBRETRO_PATH:
         {
             godot::UtilityFunctions::print( "[RetroHost] Core requested path" );
-            *(const char **)data = this->cwd.utf8().get_data();
+            *(const char **)data = this->cwd.trim_suffix( "/" ).utf8().get_data();
             return true;
         }
+
+        case RETRO_ENVIRONMENT_GET_FASTFORWARDING: {
+            if(!data)
+                return false;
+            bool *b = (bool *)data;
+            *b = false;
+        }
+        break;
 
         case RETRO_ENVIRONMENT_SHUTDOWN:
         {

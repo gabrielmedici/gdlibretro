@@ -4,3 +4,6 @@
 [submodule "extern/yaml-cpp"]
 	path = extern/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "extern/libretro-common"]
+	path = extern/libretro-common
+	url = https://github.com/libretro/libretro-common.git

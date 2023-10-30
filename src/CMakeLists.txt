@@ -8,10 +8,12 @@ target_sources( ${PROJECT_NAME}
         RetroHost.hpp
         RetroHost.cpp
         CoreEnvironment.cpp
+        CoreVariables.cpp
         Audio.cpp
         Input.cpp
         Video.cpp
         noarch.c
+        KeyboardMap.hpp
 )
 
 target_include_directories( ${PROJECT_NAME}

@@ -138,6 +138,9 @@ bool RetroHost::load_core( godot::String name )
     def_and_load_fn_symbol_return_false_on_err( this->core.handle, set_audio_sample_batch,
                                                 retro_set_audio_sample_batch );
 
+    this->core_name = name;
+    this->load_core_variables();
+
     // May god have mercy on our souls for the crimes we are about to commit
     // Blame c++
 
@@ -163,18 +166,6 @@ bool RetroHost::load_core( godot::String name )
 
     // End of c++ crimes
 
-    this->core_variables_path = ( this->cwd + name + ".yml" ).utf8().get_data();
-    try
-    {
-        godot::UtilityFunctions::print( "[RetroHost] Loading core variables file" );
-        this->core_variables = YAML::LoadFile( this->core_variables_path.string() );
-    }
-    catch ( YAML::BadFile &e )
-    {
-        (void)e;
-        this->core_variables = YAML::Node();
-    }
-
     this->core.retro_init();
 
     this->core.retro_load_game( NULL );
@@ -194,26 +185,20 @@ bool RetroHost::load_core( godot::String name )
 
 void RetroHost::unload_core()
 {
-    try
-    {
-        godot::UtilityFunctions::print( "[RetroHost] Dumping variables to file: ", this->core_variables_path.c_str() );
-        std::filesystem::create_directories( this->core_variables_path.parent_path() );
 
-        std::ofstream ofs( this->core_variables_path );
-        ofs << this->core_variables;
-        ofs.close();
-    }
-    catch ( std::exception &e )
+    // Free all the strings we've allocated for the core
+    for ( auto &ptr : this->please_free_me_str )
     {
-        (void)e;
-        godot::UtilityFunctions::printerr( "[RetroHost] Failed to dump variables to file" );
+        godot::UtilityFunctions::print( "[RetroHost] Freeing allocated string: ", ptr);
+        delete[] ptr;
     }
-
+    this->please_free_me_str.clear();
     if ( this->core.initialized )
     {
         godot::UtilityFunctions::print( "[RetroHost] Deinitializing core" );
         this->core.retro_deinit();
         this->core.initialized = false;
+        this->save_core_variables();
     }
     if ( this->core.handle != NULL )
     {
@@ -239,4 +224,5 @@ void RetroHost::_bind_methods()
     godot::ClassDB::bind_method( godot::D_METHOD( "unload_core" ), &RetroHost::unload_core );
     godot::ClassDB::bind_method( godot::D_METHOD( "run" ), &RetroHost::run );
     godot::ClassDB::bind_method( godot::D_METHOD( "get_frame_buffer" ), &RetroHost::get_frame_buffer );
+    godot::ClassDB::bind_method( godot::D_METHOD( "forward_input", "event" ), &RetroHost::forwarded_input );
 }

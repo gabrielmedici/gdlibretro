@@ -2,9 +2,10 @@
 
 #include "Windows.h"
 #include "filesystem"
-#include "godot_cpp/classes/object.hpp"
-#include "libretro.h"
 #include "godot_cpp/classes/image.hpp"
+#include "godot_cpp/classes/object.hpp"
+#include "godot_cpp/classes/input_event.hpp"
+#include "libretro.h"
 #include "yaml-cpp/yaml.h"
 
 class RetroHost : public godot::Object
@@ -13,7 +14,7 @@ class RetroHost : public godot::Object
 
 public:
     godot::String cwd;
-    static RetroHost* get_singleton();
+    static RetroHost *get_singleton();
 
     RetroHost();
     ~RetroHost();
@@ -21,30 +22,41 @@ public:
     bool load_core( godot::String path );
     void unload_core();
     void run();
+    void forwarded_input(const godot::Ref<godot::InputEvent> &event);
 
 private:
-
-    static RetroHost* singleton;
+    static RetroHost *singleton;
 
     godot::Ref<godot::Image> frame_buffer;
-    godot::Ref<godot::Image> get_frame_buffer() { return frame_buffer; }
+    godot::Ref<godot::Image> get_frame_buffer()
+    {
+        return frame_buffer;
+    }
+
+    // We're passing character arrays to the core, we don't know the required lifetime, so we're
+    // freeing everything on unload
+    std::vector<char *> please_free_me_str;
 
     YAML::Node core_variables;
-    std::filesystem::path core_variables_path;
+    godot::String core_name;
 
-    bool core_environment(unsigned cmd, void *data);
+    void load_core_variables();
+    void save_core_variables();
+    bool RetroHost::get_variable( retro_variable *variable );
+
+    bool core_environment( unsigned cmd, void *data );
 
     void core_video_init( const struct retro_game_geometry *geometry );
-    void core_video_refresh(const void *data, unsigned width, unsigned height, size_t pitch);
+    void core_video_refresh( const void *data, unsigned width, unsigned height, size_t pitch );
     bool core_video_set_pixel_format( unsigned format );
     godot::Image::Format pixel_format;
 
-    void core_input_poll(void);
-    int16_t core_input_state(unsigned port, unsigned device, unsigned index, unsigned id);
+    void core_input_poll( void );
+    int16_t core_input_state( unsigned port, unsigned device, unsigned index, unsigned id );
 
     void core_audio_init( retro_system_av_info av );
-    void core_audio_sample(int16_t left, int16_t right);
-    size_t core_audio_sample_batch(const int16_t *data, size_t frames);
+    void core_audio_sample( int16_t left, int16_t right );
+    size_t core_audio_sample_batch( const int16_t *data, size_t frames );
 
     struct
     {
@@ -73,6 +85,8 @@ private:
         // unsigned retro_get_region(void);
         // void *retro_get_memory_data(unsigned id);
         // size_t retro_get_memory_size(unsigned id);
+
+        retro_keyboard_event_t retro_keyboard_event_callback;
     } core;
 
 protected:

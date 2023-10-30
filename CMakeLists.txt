@@ -115,9 +115,7 @@ endif()
 
 set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
 
-add_subdirectory( extern/godot-cpp )
-add_subdirectory( extern/yaml-cpp)
-add_subdirectory( extern/libretro )
+add_subdirectory( extern )
 
 set_target_properties( godot-cpp
     PROPERTIES

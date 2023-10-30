@@ -1,7 +1,6 @@
-extends Node2D
+extends Node3D
 
 @onready var tex_rect = get_node("TextureRect")
-
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	RetroHost.load_core("vice_x128_libretro")
@@ -16,5 +15,8 @@ func _process(delta):
 		return
 		
 	var img_tex = ImageTexture.create_from_image(frame_buffer)
-	tex_rect.texture = img_tex
+	$MeshInstance3D.get_surface_override_material(0).albedo_texture = img_tex
 	return
+	
+func _input(event):
+	RetroHost.forward_input(event)

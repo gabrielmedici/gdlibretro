@@ -1,0 +1,11 @@
+Model Information:
+* title:	Old Computer
+* source:	https://sketchfab.com/3d-models/old-computer-ac488d426f824858b3eb73a6ac15f9da
+* author:	YieldingMist206 (https://sketchfab.com/YieldingMist206)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Old Computer" (https://sketchfab.com/3d-models/old-computer-ac488d426f824858b3eb73a6ac15f9da) by YieldingMist206 (https://sketchfab.com/YieldingMist206) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
