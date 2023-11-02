@@ -53,6 +53,7 @@ bool RetroHost::core_video_set_pixel_format( unsigned format ) {
             return true;
         case RETRO_PIXEL_FORMAT_XRGB8888:
             godot::UtilityFunctions::print( "[RetroHost] Pixel format: XRGB8888" );
+            // TODO: Should actually be ARGB8888, but that's not supported by Godot
             this->pixel_format = godot::Image::Format::FORMAT_RGBA8;
             return true;
         case RETRO_PIXEL_FORMAT_RGB565:

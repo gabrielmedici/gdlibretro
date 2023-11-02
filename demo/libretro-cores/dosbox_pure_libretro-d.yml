@@ -13,7 +13,7 @@ dosbox_pure_mouse_wheel: 67/68
 dosbox_pure_mouse_speed_factor: 1.0
 dosbox_pure_mouse_speed_factor_x: 1.0
 dosbox_pure_auto_mapping: true
-dosbox_pure_keyboard_layout: pt-BR
+dosbox_pure_keyboard_layout: br
 dosbox_pure_menu_transparency: 50
 dosbox_pure_joystick_analog_deadzone: 15
 dosbox_pure_joystick_timed: true
