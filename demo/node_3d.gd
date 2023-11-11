@@ -3,7 +3,8 @@ extends Node3D
 @onready var tex_rect = get_node("TextureRect")
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	RetroHost.load_core("dosbox_pure_libretro-d")
+	RetroHost.load_core("dosbox_pure_libretro")
+	#RetroHost.load_core("vice_x64sc_libretro")
 	#LibRetroHost.load_core("D:\\Documents\\Code\\noarch\\demo\\bin\\LibRetroHost\\lib\\Windows-AMD64\\LibRetroHost-d.dll")
 
 

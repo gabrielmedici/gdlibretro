@@ -14,6 +14,7 @@ target_sources( ${PROJECT_NAME}
         Video.cpp
         noarch.c
         KeyboardMap.hpp
+        VFS.cpp
 )
 
 target_include_directories( ${PROJECT_NAME}

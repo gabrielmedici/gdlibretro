@@ -41,6 +41,7 @@ RetroHost::RetroHost()
 {
     godot::UtilityFunctions::print( "[RetroHost] Constructor" );
     singleton = this;
+    this->vfs.init_vfs_interface();
 }
 
 RetroHost::~RetroHost()

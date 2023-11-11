@@ -5,3 +5,5 @@ build
 vicerc*
 *.exe
 *.pck
+
+!dosbox_pure_libretro.dll

@@ -41,14 +41,14 @@ void RetroHost::forwarded_input( const godot::Ref<godot::InputEvent> &event )
                              (RETROKMOD_META & ( key_event->is_meta_pressed() ? 0xFF : 0 )) |
                              (RETROKMOD_SHIFT & ( key_event->is_shift_pressed() ? 0xFF : 0 ));
 
-        auto retro_key = godotKeyToRetroKey(key_event->get_keycode());
+        auto retro_key = godotKeyToRetroKey(key_event->get_key_label());
 
-        //godot::UtilityFunctions::print( "Key event: echo: ", key_event->is_echo(),
-                                // " key label: ", key_event->get_key_label(),
-                                // " key code: ", key_event->get_keycode(),
-                                // " physical key: ", key_event->get_physical_keycode(),
-                                // " pressed: ", key_event->is_pressed(),
-                                // " retro key: ", retro_key );
+        godot::UtilityFunctions::print( "Key event: echo: ", key_event->is_echo(),
+                                " key label: ", key_event->get_key_label(),
+                                " key code: ", key_event->get_keycode(),
+                                " physical key: ", key_event->get_physical_keycode(),
+                                " pressed: ", key_event->is_pressed(),
+                                " retro key: ", retro_key );
 
         if(retro_key > RETROK_LAST)
             return;
