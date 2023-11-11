@@ -2,8 +2,6 @@
 
 target_sources( ${PROJECT_NAME}
     PRIVATE
-        LibRetroHost.h
-        LibRetroHost.cpp
         RegisterExtension.cpp
         RetroHost.hpp
         RetroHost.cpp
@@ -12,7 +10,6 @@ target_sources( ${PROJECT_NAME}
         Audio.cpp
         Input.cpp
         Video.cpp
-        noarch.c
         KeyboardMap.hpp
         VFS.cpp
 )

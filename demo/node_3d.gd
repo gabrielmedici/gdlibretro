@@ -5,7 +5,6 @@ extends Node3D
 func _ready():
 	RetroHost.load_core("dosbox_pure_libretro")
 	#RetroHost.load_core("vice_x64sc_libretro")
-	#LibRetroHost.load_core("D:\\Documents\\Code\\noarch\\demo\\bin\\LibRetroHost\\lib\\Windows-AMD64\\LibRetroHost-d.dll")
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

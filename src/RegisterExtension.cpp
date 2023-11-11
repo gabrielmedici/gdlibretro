@@ -7,7 +7,6 @@
 #include "godot_cpp/godot.hpp"
 #include "godot_cpp/classes/engine.hpp"
 
-#include "LibRetroHost.h"
 #include "RetroHost.hpp"
 
 /// @file
@@ -29,7 +28,6 @@ namespace
             return;
         }
 
-        godot::ClassDB::register_class<LibRetroHost>();
         godot::ClassDB::register_class<RetroHost>();
 
         singleton = memnew( RetroHost );
